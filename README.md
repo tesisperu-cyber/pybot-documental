@@ -72,12 +72,14 @@ Estas constantes están al inicio de `app.py`:
 | Constante | Qué controla | Valor por defecto |
 | --- | --- | --- |
 | `EMBED_MODEL` | Modelo de embeddings | `paraphrase-multilingual-MiniLM-L12-v2` |
-| `DEFAULT_LLM` | Modelo de Groq para responder | `llama-3.3-70b-versatile` |
+| `DEFAULT_LLM` | Modelo de Groq para responder | `openai/gpt-oss-120b` |
 | `CHUNK_WORDS` / `CHUNK_OVERLAP` | Tamaño y solapamiento de fragmentos | 180 / 40 palabras |
 | `MAX_FILES` / `MAX_FILE_MB` | Límites de carga | 5 archivos / 10 MB |
 | `FREE_QUESTIONS` | Preguntas gratis con la clave de la app | 15 |
 
-Si Groq cambia o retira el modelo, puedes escribir otro en el campo **Modelo de Groq** de la barra lateral.
+Si Groq cambia o retira el modelo (como pasó con `llama-3.3-70b-versatile`, retirado el 16-ago-2026), escribe otro en el campo **Modelo de Groq** de la barra lateral, o define `GROQ_MODEL = "nombre/del-modelo"` en *Secrets* sin tocar el código. Lista vigente: [console.groq.com/docs/models](https://console.groq.com/docs/models).
+
+> Si ves `NotFoundError` al preguntar, casi siempre es el nombre del modelo.
 
 ## ⚠️ Limitaciones
 

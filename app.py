@@ -18,7 +18,7 @@ import streamlit as st
 # ----------------------------- Configuración ---------------------------------
 APP_NAME = "PYBOT DOCUMENTAL"
 EMBED_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"  # 384 dim, multilingüe
-DEFAULT_LLM = "llama-3.3-70b-versatile"  # cámbialo en la barra lateral si Groq lo renombra
+DEFAULT_LLM = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile fue retirado por Groq (16-ago-2026)
 CHUNK_WORDS = 180
 CHUNK_OVERLAP = 40
 MAX_FILE_MB = 10
@@ -186,6 +186,14 @@ def answer(question, results, api_key, model):
     return resp.choices[0].message.content
 
 
+def default_model():
+    """Modelo por defecto: GROQ_MODEL en Secrets si existe; si no, DEFAULT_LLM."""
+    try:
+        return st.secrets["GROQ_MODEL"]
+    except Exception:
+        return DEFAULT_LLM
+
+
 def resolve_key(user_key):
     """Devuelve (clave, es_del_dueño)."""
     if user_key.strip():
@@ -244,7 +252,7 @@ def sidebar():
         only_docs = st.multiselect("Limitar a documentos", sorted(set(ss.hashes.values())))
 
         st.divider()
-        model = st.text_input("Modelo de Groq", value=DEFAULT_LLM)
+        model = st.text_input("Modelo de Groq", value=default_model()).strip() or default_model()
     return k, only_docs, user_key, model
 
 
@@ -306,7 +314,19 @@ def tab_chat(k, only_docs, user_key, model):
                         reply = answer(prompt, sources, key, model)
                     ss.n_questions += 1
                 except Exception as e:
-                    reply = f"No se pudo generar la respuesta ({type(e).__name__}). Revisa la clave y el modelo."
+                    name = type(e).__name__
+                    if name == "NotFoundError":
+                        hint = (
+                            f"El modelo «{model}» no existe o fue retirado por Groq. "
+                            "Cámbialo en «Modelo de Groq» (barra lateral), por ejemplo `openai/gpt-oss-120b`."
+                        )
+                    elif name == "AuthenticationError":
+                        hint = "La API Key de Groq no es válida."
+                    elif name == "RateLimitError":
+                        hint = "Se alcanzó el límite de uso de Groq. Espera un momento e inténtalo de nuevo."
+                    else:
+                        hint = "Revisa la clave y el modelo."
+                    reply = f"No se pudo generar la respuesta ({name}). {hint}\n\nDetalle: `{str(e)[:300]}`"
         st.markdown(reply)
         if sources:
             render_sources(sources)
